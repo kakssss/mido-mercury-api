@@ -7,30 +7,32 @@ module.exports = async (req, res) => {
 
   try {
     const result = await Mercury.parse(url);
-    const originalHTML = result.content || '';
-    const $ = cheerio.load(originalHTML);
+    const rawHTML = result.content || '';
 
-    // ✅ شيل العناصر اللي دايمًا بتكون مزعجة
-    $('aside, .share, .social, .related, .ads, .ad, .newsletter, footer, header, script, nav').remove();
+    const $ = cheerio.load(rawHTML);
 
-    // ✅ شيل الـ comments في HTML
-    $('*').contents().each(function () {
-      if (this.type === 'comment') $(this).remove();
-    });
+    // 🧹 1. إزالة العناصر المزعجة
+    const badSelectors = [
+      'aside',
+      '.share',
+      '.social',
+      '.related',
+      '.ads',
+      '.newsletter',
+      'footer',
+      'header',
+      'nav',
+      'script',
+      'noscript',
+      'iframe'
+    ];
+    $(badSelectors.join(',')).remove();
 
-    // ✅ شيل الـ inline styles اللي ملهاش لازمة
-    $('[style]').removeAttr('style');
-    $('[class]').removeAttr('class');
+    // 🧼 2. إزالة الـ class والـ style من كل العناصر (عشان التنسيق يبقى نضيف)
+    $('*').removeAttr('class').removeAttr('style');
 
-    // ✅ احتفظ فقط بعناصر العرض الأساسية
-    const allowedTags = ['p', 'strong', 'em', 'ul', 'ol', 'li', 'img', 'h1', 'h2', 'h3', 'h4', 'blockquote', 'br', 'pre', 'code', 'a'];
-    $('*').each(function () {
-      if (!allowedTags.includes($(this)[0].tagName)) {
-        $(this).replaceWith($(this).contents());
-      }
-    });
-
-    const cleanHTML = $.html().trim();
+    // ✅ 3. نرجع نسخة HTML نضيفة
+    const cleanHTML = $('body').html().trim(); // خد كل اللي في الـ body بعد التنضيف
 
     res.json({
       title: result.title,
