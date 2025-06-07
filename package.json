@@ -1,0 +1,8 @@
+{
+  "name": "mido-mercury-api",
+  "version": "1.0.0",
+  "main": "api/parser.js",
+  "dependencies": {
+    "@postlight/mercury-parser": "^2.2.0"
+  }
+}

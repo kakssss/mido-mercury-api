@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "api/parser.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/parser", "dest": "api/parser.js" }
+  ]
+}
