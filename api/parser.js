@@ -9,41 +9,51 @@ module.exports = async (req, res) => {
     const result = await Mercury.parse(url);
     const rawHTML = result.content || '';
 
-    // ✅ نستخدم Cheerio لتنضيف المحتوى
+    // ✅ تحميل الـ HTML للتنضيف
     const $ = cheerio.load(rawHTML);
 
-    // 🧹 إزالة العناصر المزعجة
+    // 🧹 إزالة العناصر الغير مرغوبة
     const badSelectors = [
-      'aside',
-      'header',
-      'footer',
-      'nav',
-      'script',
-      'style',
-      '.share',
-      '.related',
-      '.ads',
-      '.ad',
-      '.newsletter',
-      '.social',
-      'noscript',
-      'iframe'
+      'aside', 'header', 'footer', 'nav', 'script', 'style',
+      '.share', '.related', '.ads', '.ad', '.newsletter',
+      '.social', 'noscript', 'iframe'
     ];
     $(badSelectors.join(',')).remove();
 
-    // 🔧 إزالة class و style من كل العناصر
+    // ❌ إزالة العناصر الفاضية
+    $('*').each((_, el) => {
+      const content = $(el).html()?.trim();
+      if (!content) {
+        $(el).remove();
+      }
+    });
+
+    // 🖼️ حذف الصور اللي ملهاش src سليم
+    $('img').each((_, el) => {
+      const src = $(el).attr('src');
+      if (!src || !src.startsWith('http')) {
+        $(el).remove();
+      }
+    });
+
+    // 💅 إزالة كل class و style
     $('*').each((_, el) => {
       $(el).removeAttr('class').removeAttr('style');
     });
 
-    // ✅ بعد التنضيف، نحافظ على الـ HTML النهائي
-    const cleanHTML = $('body').html().trim();
+    // ✨ تنسيق بسيط للباراجرافات (اختياري لو بتحب تبقى القراءة أسهل)
+    $('p').each((_, el) => {
+      $(el).prepend('\n').append('\n');
+    });
 
-    // 🎁 الرد النهائي
+    // 🔧 استخراج المحتوى المنظف
+    const cleanHTML = $('body').html()?.trim() || $.root().html().trim();
+
+    // 🎯 الرد النهائي
     res.json({
-      title: result.title,
-      lead_image_url: result.lead_image_url,
-      url: result.url,
+      title: result.title?.trim() || '',
+      lead_image_url: result.lead_image_url || '',
+      url: result.url || url,
       content_html: cleanHTML
     });
   } catch (err) {
